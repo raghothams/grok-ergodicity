@@ -63,6 +63,9 @@ def run_experiment(initial_amount, gain_pct, loss_pct, leverage):
     ## Ensemble Average
     """)
     fig = px.line(df_ens, x="index", y="ens_avg")
+    fig.update_layout(
+        xaxis_title="timestep",
+        yaxis_title="ensemble avg. at timestep",)
     st.plotly_chart(fig, use_container_width=True)
 
     st.write("""
@@ -70,6 +73,16 @@ def run_experiment(initial_amount, gain_pct, loss_pct, leverage):
     """)
     rand_p = np.random.randint(1, 100000)
     fig = px.line(df_gain, x="index", y="p_gain_100")
+    fig.update_layout(
+        xaxis_title="timestep",
+        yaxis_title="gain at timestep",)
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.write("""
+    ## Histogram of money people end up with
+    """)
+    residue = df_gain.iloc[-1].value_counts().reset_index()
+    fig = px.histogram(residue, x="index", marginal="box")
     st.plotly_chart(fig, use_container_width=True)
 
 sl_initial_amount = st.slider('Initial Amount', 1000, 1000000, 1000)
