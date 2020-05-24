@@ -2,12 +2,17 @@ from datetime import date, datetime
 import streamlit as st
 import numpy as np
 import pandas as pd
-# import seaborn as sns
-# import plotly.express as px
 import yfinance as yf
+import plotly.graph_objects as go
+import plotly.express as px
+
+import locale
+locale.setlocale( locale.LC_ALL, '' )
 
 st.write("""
-## Ergodicity Experiment
+# Stock Market Portfolio Simulation
+
+### A lesson on Ergodicity
 """)
 
 np.random.seed(9)
@@ -27,11 +32,11 @@ def load_data(stocks_list):
 
 
 def run_experiment(initial_amount, leverage, stock_analyze_pc_df):
+
     evt_data = {}
     gain_data = {}
 
     p_N = len(stocks_list)
-    print(p_N)
 
     # generate data for every person
     for tick in stock_analyze_pc_df.columns:
@@ -60,13 +65,19 @@ def plot_avgs(stock_gain_df, tickers):
 
     stock_gain_df = stock_gain_df.set_index("date")
     stock_gain_df = stock_gain_df.loc[:, tickers]
-    st.line_chart(stock_gain_df)
+
+    fig = go.Figure()
+    for t in tickers:
+        fig.add_trace(go.Scatter(x=stock_gain_df.index, y=stock_gain_df[t], mode="lines", name=t))
+    st.plotly_chart(fig, use_container_width=True)
+
 
 
 def main():
     df = load_data(stocks_list)
 
     sl_initial_amount = 10000
+    st.sidebar.markdown("### Set parameters for simulation")
     sl_leverage = st.sidebar.slider('Leverage', 0.0, 1.0, 1.0)
     sl_start_dt = st.sidebar.date_input('Choose investment start date', date(2016,1,10), date(2016,1,10))
     sl_end_dt = st.sidebar.date_input('Choose investment end date', date(2020, 1, 31), date(2016,1,10))
@@ -79,7 +90,7 @@ def main():
     st.write(f"""
     ### Parameters
 
-    * Initial Amount = ${sl_initial_amount}
+    * Initial Amount = {locale.currency(sl_initial_amount, grouping=True)}
     * Leverage = {sl_leverage}
     * Investment Start Date = {sl_start_dt}
     * Investment End Date = {sl_end_dt}
@@ -92,29 +103,17 @@ def main():
 
     # calc change percentage
     stock_analyze_pc_df = stock_analyze_df.apply(lambda x: (x - x.shift(1))/x.shift(1))
+    stock_analyze_pc_df = stock_analyze_pc_df.fillna(0)
 
 
-    if st.sidebar.button("Run", "run-exp-btn"):
+    # run simulation on button press
+    if st.sidebar.button("Run Simulation", "run-exp-btn"):
         gain_data = run_experiment(sl_initial_amount, sl_leverage, stock_analyze_pc_df)
         stock_gain_df = pd.DataFrame(gain_data)
-        # stock_gain_df.columns = [x for x in stocks_list_reordered]
         stock_gain_df["date"] = stock_analyze_pc_df.index
 
         plot_avgs(stock_gain_df, sl_select_tickers)
 
-
-
-    # initial_amount = 1000
-    # gain_pct = 0.5
-    # loss_pct = 0.4
-    # leverage = 1.0
-
-
-
-    # fig.show()
-    # sns.lineplot(x=df_ens.index, y=df_ens["ens_avg"], )
-
-    # sns.lineplot(x=df_gain.index, y=df_gain["p_gain_100"])
 
 if __name__ == "__main__":
     main()
