@@ -3,115 +3,106 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 # import seaborn as sns
-import plotly.express as px
+# import plotly.express as px
+import yfinance as yf
 
 st.write("""
-# Ergodicity Experiment
+## Ergodicity Experiment
 """)
 
 np.random.seed(9)
+stocks_list = ['TSLA', 'XOM', 'GOOGL', 'SHOP', 'AAL', 'NDX', 'DJI']
 
 @st.cache
-def load_data():
-    df = pd.read_csv("../data/clean_nasdaq.csv")
-    df["DATE"] = pd.to_datetime(df["DATE"]).dt.normalize()
+def load_data(stocks_list):
+    with st.spinner('Downloading ticker data ...'):
+        stocks_price_df = yf.download(stocks_list, 
+                        start='2000-01-01', 
+                        end='2020-05-22', 
+                        actions=True,
+                        rounding=True,
+                        progress=False)
 
-    return df
+    return stocks_price_df
 
-def run_experiment(initial_amount, leverage, df):
-    # num of time steps
-    t_N = 60
 
-    df = df.reset_index().drop("index", axis=1)
-    # num of people
-    p_N = 100000
-
+def run_experiment(initial_amount, leverage, stock_analyze_pc_df):
     evt_data = {}
     gain_data = {}
 
-    data_load_state = st.text('Running Experiment ...')
+    p_N = len(stocks_list)
+    print(p_N)
 
     # generate data for every person
-    # start with initial amount as leverage
-    person_gain = initial_amount
-    
-    # temp state store for interim gains
-    gains = [person_gain]
-    
-    # calc gain progression
-    for i in range(df.shape[0]):
-        row = df.iloc[i]
-        person_gain = (person_gain * (1 - leverage)) + (person_gain * leverage * (1 + row["change_frac"]))
+    for tick in stock_analyze_pc_df.columns:
+        # start with initial amount as leverage
+        person_gain = initial_amount
         
-        gains.append(person_gain)
-
-#         print(person_gain, e)
+        # generate random events of gain / loss for N time steps
+        evts = stock_analyze_pc_df[tick].iloc[1:].values.tolist()
         
+        # temp state store for interim gains. Initialize it with the starting amount
+        gains = [person_gain]
+        
+        # calc gain progression
+        for e in evts:
+            # st.write(e)
+            person_gain = (person_gain * (1 - leverage)) + (person_gain * leverage * (1 + e))
+            gains.append(person_gain)
 
-    df_gain = pd.DataFrame(gains)
-    df_gain = df_gain.reset_index()
-    df_gain.columns = ["index", "gain"]
-    df_gain["ts"] = df["DATE"]
+            
+        gain_data[tick] = gains
 
-    # df_ens = pd.DataFrame()
-    # df_ens["ens_avg"] = df_gain.apply(np.mean, axis=1)
-    # df_ens["ens_med"] = df_gain.apply(np.median, axis=1)
-    # df_ens = df_ens.reset_index()
-
-    data_load_state.text('Experiment Completed!')
+    return gain_data
 
 
-    st.write("""
-    ## Ensemble Average
-    """)
-    fig = px.line(df_gain, x="ts", y="gain")
-    fig.update_layout(
-        xaxis_title="timestep",
-        yaxis_title="ensemble avg. at timestep",)
-    st.plotly_chart(fig, use_container_width=True)
+def plot_avgs(stock_gain_df, tickers):
 
-    # st.write("""
-    # ## Specific case (Reality)
-    # """)
-    # rand_p = np.random.randint(1, 100000)
-    # fig = px.line(df_gain, x="index", y="p_gain_100")
-    # fig.update_layout(
-    #     xaxis_title="timestep",
-    #     yaxis_title="gain at timestep",)
-    # st.plotly_chart(fig, use_container_width=True)
-
-    # st.write("""
-    # ## Histogram of money people end up with
-    # """)
-    # residue = df_gain.iloc[-1].value_counts().reset_index()
-    # fig = px.histogram(residue, x="index", marginal="box")
-    # st.plotly_chart(fig, use_container_width=True)
+    stock_gain_df = stock_gain_df.set_index("date")
+    stock_gain_df = stock_gain_df.loc[:, tickers]
+    st.line_chart(stock_gain_df)
 
 
 def main():
-    df = load_data()
+    df = load_data(stocks_list)
 
-    sl_initial_amount = st.slider('Initial Amount', 1000, 1000000, 1000)
-    # sl_gain_pct = st.slider('Gain %', 0.0, 1.0, 0.5)
-    # sl_loss_pct = st.slider('Loss %', 0.0, 1.0, 0.4)
-    sl_leverage = st.slider('Leverage', 0.0, 1.0, 1.0)
-    sl_start_dt = st.date_input('Choose investment start date', value=date(1995,1,10))
-    sl_end_dt = st.date_input('Choose investment end date', value=date(2020, 1, 31))
+    sl_initial_amount = 10000
+    sl_leverage = st.sidebar.slider('Leverage', 0.0, 1.0, 1.0)
+    sl_start_dt = st.sidebar.date_input('Choose investment start date', date(2016,1,10), date(2016,1,10))
+    sl_end_dt = st.sidebar.date_input('Choose investment end date', date(2020, 1, 31), date(2016,1,10))
+    sl_select_tickers = st.sidebar.multiselect("Selet tickers to compare performance",
+                            stocks_list,
+                            stocks_list)
 
-    st.write(sl_start_dt)
-    st.write(sl_end_dt)
-    df_slice = df.loc[(df["DATE"] >= np.datetime64(sl_start_dt)) & (df["DATE"] <= np.datetime64(sl_end_dt))]
-    st.write(df_slice.head())
+    df_slice = df.loc[(df.index >= np.datetime64(sl_start_dt)) & (df.index <= np.datetime64(sl_end_dt))]
 
     st.write(f"""
-    ## Experiment Parameters
+    ### Parameters
 
     * Initial Amount = ${sl_initial_amount}
     * Leverage = {sl_leverage}
+    * Investment Start Date = {sl_start_dt}
+    * Investment End Date = {sl_end_dt}
     """)
 
-    if st.button("Run", "run-exp-btn"):
-        run_experiment(sl_initial_amount, sl_leverage, df_slice)
+    # cleanup data for adjusted change values
+    stock_analyze_df = df_slice.iloc[:,:7].copy()
+    stock_analyze_df.columns = stock_analyze_df.columns.droplevel()
+    stock_analyze_df = stock_analyze_df.fillna(method="ffill", inplace=False)
+
+    # calc change percentage
+    stock_analyze_pc_df = stock_analyze_df.apply(lambda x: (x - x.shift(1))/x.shift(1))
+
+
+    if st.sidebar.button("Run", "run-exp-btn"):
+        gain_data = run_experiment(sl_initial_amount, sl_leverage, stock_analyze_pc_df)
+        stock_gain_df = pd.DataFrame(gain_data)
+        # stock_gain_df.columns = [x for x in stocks_list_reordered]
+        stock_gain_df["date"] = stock_analyze_pc_df.index
+
+        plot_avgs(stock_gain_df, sl_select_tickers)
+
+
 
     # initial_amount = 1000
     # gain_pct = 0.5
