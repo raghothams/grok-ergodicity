@@ -108,11 +108,15 @@ def main():
 
     # run simulation on button press
     if st.sidebar.button("Run Simulation", "run-exp-btn"):
-        gain_data = run_experiment(sl_initial_amount, sl_leverage, stock_analyze_pc_df)
-        stock_gain_df = pd.DataFrame(gain_data)
-        stock_gain_df["date"] = stock_analyze_pc_df.index
+        if sl_end_dt > sl_start_dt:
+            gain_data = run_experiment(sl_initial_amount, sl_leverage, stock_analyze_pc_df)
+            stock_gain_df = pd.DataFrame(gain_data)
+            stock_gain_df["date"] = stock_analyze_pc_df.index
 
-        plot_avgs(stock_gain_df, sl_select_tickers)
+            plot_avgs(stock_gain_df, sl_select_tickers)
+        else:
+            st.sidebar.error("Enter valid dates")
+
 
 
 if __name__ == "__main__":
