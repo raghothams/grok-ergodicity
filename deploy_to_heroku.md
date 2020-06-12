@@ -6,7 +6,7 @@ This document explains how to deploy this `streamlit` application on Heroku.
 
 ### Step 1: 3 Required files
 
-**1 - `requirements.txt`**   
+**1 `requirements.txt`**   
 A standard file that lists all the libraries needed for the app.
 
 **2 `setup.sh`**    
