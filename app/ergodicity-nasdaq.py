@@ -17,10 +17,8 @@ st.write("""
 
 np.random.seed(9)
 equity_list = pd.read_csv("data/equity_list.csv")
-#stocks_list = equity_list.Ticker.tolist()
-#init_select_list = stocks_list[:3]
 
-start_date_year = 2016
+start_date_year = 2004
 start_date_month = 1
 start_date_day = 10
 
@@ -85,22 +83,6 @@ def plot_avgs(stock_gain_df, equity_name):
         fig.add_trace(go.Scatter(x=stock_gain_df.index,
                                  y=stock_gain_df[equity_ticker[i]], mode="lines", name=e_name))
     st.plotly_chart(fig, use_container_width=True)
-
-
-# def plot_df(sl_select_tickers):
-
-#     sl_equity_list = equity_list[equity_list.Ticker.isin(sl_select_tickers)]
-
-#     fig = go.Figure(data=[go.Table(
-#         header=dict(values=list(sl_equity_list.columns),
-#                     fill_color='paleturquoise',
-#                     align='left'),
-#         cells=dict(values=[sl_equity_list.Name, sl_equity_list.Ticker],
-#                    fill_color='lavender',
-#                    align='left'))])
-
-#     fig.update_layout(title="Selected equity names and their tickers")
-#     st.plotly_chart(fig, use_container_width=True)
 
 
 def main():
