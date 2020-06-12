@@ -17,8 +17,8 @@ st.write("""
 
 np.random.seed(9)
 equity_list = pd.read_csv("data/equity_list.csv")
-stocks_list = equity_list.Ticker.tolist()
-init_select_list = stocks_list[:3]
+#stocks_list = equity_list.Ticker.tolist()
+#init_select_list = stocks_list[:3]
 
 start_date_year = 2016
 start_date_month = 1
@@ -30,9 +30,9 @@ end_date = date.today() - timedelta(days=1)
 
 
 @st.cache
-def load_data(stocks_list):
+def load_data(equity_list):
     with st.spinner('Downloading ticker data ...'):
-        stocks_price_df = yf.download(stocks_list,
+        stocks_price_df = yf.download(equity_list.Ticker.tolist(),
                                       start=start_date,
                                       end=end_date.strftime("%Y-%m-%d"),
                                       actions=True,
@@ -47,7 +47,7 @@ def run_experiment(initial_amount, leverage, stock_analyze_pc_df):
     evt_data = {}
     gain_data = {}
 
-    p_N = len(stocks_list)
+    p_N = len(equity_list)
 
     # generate data for every person
     for tick in stock_analyze_pc_df.columns:
@@ -72,36 +72,39 @@ def run_experiment(initial_amount, leverage, stock_analyze_pc_df):
     return gain_data
 
 
-def plot_avgs(stock_gain_df, tickers):
+def plot_avgs(stock_gain_df, equity_name):
 
     stock_gain_df = stock_gain_df.set_index("date")
-    stock_gain_df = stock_gain_df.loc[:, tickers]
+    equity_ticker = equity_list[equity_list.Name.isin(
+        equity_name)].Ticker.tolist()
+
+    stock_gain_df = stock_gain_df.loc[:, equity_ticker]
 
     fig = go.Figure()
-    for t in tickers:
+    for i, e_name in enumerate(equity_name):
         fig.add_trace(go.Scatter(x=stock_gain_df.index,
-                                 y=stock_gain_df[t], mode="lines", name=t))
+                                 y=stock_gain_df[equity_ticker[i]], mode="lines", name=e_name))
     st.plotly_chart(fig, use_container_width=True)
 
 
-def plot_df(sl_select_tickers):
+# def plot_df(sl_select_tickers):
 
-    sl_equity_list = equity_list[equity_list.Ticker.isin(sl_select_tickers)]
+#     sl_equity_list = equity_list[equity_list.Ticker.isin(sl_select_tickers)]
 
-    fig = go.Figure(data=[go.Table(
-        header=dict(values=list(sl_equity_list.columns),
-                    fill_color='paleturquoise',
-                    align='left'),
-        cells=dict(values=[sl_equity_list.Name, sl_equity_list.Ticker],
-                   fill_color='lavender',
-                   align='left'))])
+#     fig = go.Figure(data=[go.Table(
+#         header=dict(values=list(sl_equity_list.columns),
+#                     fill_color='paleturquoise',
+#                     align='left'),
+#         cells=dict(values=[sl_equity_list.Name, sl_equity_list.Ticker],
+#                    fill_color='lavender',
+#                    align='left'))])
 
-    fig.update_layout(title="Selected equity names and their tickers")
-    st.plotly_chart(fig, use_container_width=True)
+#     fig.update_layout(title="Selected equity names and their tickers")
+#     st.plotly_chart(fig, use_container_width=True)
 
 
 def main():
-    df = load_data(stocks_list)
+    df = load_data(equity_list)
 
     sl_initial_amount = 10000
     st.sidebar.markdown("### Set parameters for simulation")
@@ -115,8 +118,8 @@ def main():
         date(start_date_year, start_date_month, start_date_day))
 
     sl_select_tickers = st.sidebar.multiselect("Select tickers to compare performance",
-                                               stocks_list,
-                                               init_select_list)
+                                               equity_list.Name.tolist(),
+                                               equity_list.Name.tolist()[:3])
 
     if (np.datetime64(sl_start_dt) > np.datetime64(sl_end_dt)):
         st.write(f"""
@@ -162,7 +165,7 @@ def main():
         """)
 
         # cleanup data for adjusted change values
-        stock_analyze_df = df_slice.iloc[:, :len(stocks_list)].copy()
+        stock_analyze_df = df_slice.iloc[:, :len(equity_list)].copy()
         stock_analyze_df.columns = stock_analyze_df.columns.droplevel()
         stock_analyze_df = stock_analyze_df.fillna(
             method="ffill", inplace=False)
@@ -180,7 +183,7 @@ def main():
             stock_gain_df["date"] = stock_analyze_pc_df.index
 
             plot_avgs(stock_gain_df, sl_select_tickers)
-            plot_df(sl_select_tickers)
+            # plot_df(sl_select_tickers)
 
 
 if __name__ == "__main__":
