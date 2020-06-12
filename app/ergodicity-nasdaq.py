@@ -164,7 +164,8 @@ def main():
             stock_gain_df = pd.DataFrame(gain_data)
             stock_gain_df["date"] = stock_analyze_pc_df.index
 
-            plot_avgs(stock_gain_df, sl_select_tickers)
+            with st.spinner("Running Simulation..."):
+                plot_avgs(stock_gain_df, sl_select_tickers)
             # plot_df(sl_select_tickers)
 
 
