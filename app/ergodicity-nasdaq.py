@@ -168,6 +168,10 @@ def main():
                 plot_avgs(stock_gain_df, sl_select_tickers)
             # plot_df(sl_select_tickers)
 
+                st.write("""
+                [Try our random events simulator to understand ergodicity better](https://sleepy-ocean-52778.herokuapp.com/)
+                """)
+
 
 if __name__ == "__main__":
     main()

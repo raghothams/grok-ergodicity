@@ -87,6 +87,10 @@ def run_experiment(initial_amount, gain_pct, loss_pct, leverage):
     fig = px.histogram(residue, x="index", marginal="box")
     st.plotly_chart(fig, use_container_width=True)
 
+    st.write("""
+    [Try our stock market usecase to understand ergodicity better](https://stark-sierra-25548.herokuapp.com/)
+    """)
+
 sl_initial_amount = st.sidebar.slider('Initial Amount', 1000, 1000000, 1000)
 sl_gain_pct = st.sidebar.slider('Gain %', 0.0, 1.0, 0.5)
 sl_loss_pct = st.sidebar.slider('Loss %', 0.0, 1.0, 0.4)
@@ -106,14 +110,4 @@ st.write(f"""
 if st.sidebar.button("Run Experiment", "run-exp-btn"):
     run_experiment(sl_initial_amount, sl_gain_pct, sl_loss_pct, sl_leverage)
 
-# initial_amount = 1000
-# gain_pct = 0.5
-# loss_pct = 0.4
-# leverage = 1.0
 
-
-
-# fig.show()
-# sns.lineplot(x=df_ens.index, y=df_ens["ens_avg"], )
-
-# sns.lineplot(x=df_gain.index, y=df_gain["p_gain_100"])
