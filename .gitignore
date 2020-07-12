@@ -150,3 +150,7 @@ dmypy.json
 .pyre/
 
 # End of https://www.gitignore.io/api/osx,python,jupyternotebooks
+
+# VSCode
+.vscode/
+app/.vscode/
