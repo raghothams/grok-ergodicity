@@ -12,7 +12,7 @@ locale.setlocale(locale.LC_ALL, '')
 st.write("""
 # Stock Market Portfolio Simulation
 
-### A lesson on Ergodicity
+### A lesson on Ergodicity with stock market
 """)
 
 np.random.seed(9)

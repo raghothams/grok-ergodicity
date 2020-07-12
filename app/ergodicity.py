@@ -5,7 +5,9 @@ import pandas as pd
 import plotly.express as px
 
 st.write("""
-# Ergodicity Experiment
+# Random Event & Ergodicity
+
+### A lesson on Ergodicity with random events
 """)
 
 np.random.seed(9)
